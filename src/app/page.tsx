@@ -12,11 +12,15 @@ type StoredState = {
   avoidRecent: boolean;
 };
 
-function normalizeDate(dateStr: string): string | undefined {
-  // Accept YYYY-MM-DD or YYYY/MM/DD, return YYYY-MM-DD or undefined if invalid
-  const match = dateStr.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+function normalizeDate(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const match = value.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
   if (!match) return undefined;
-  return `${match[1]}-${match[2]}-${match[3]}`;
+  const [, y, m, d] = match;
+  const month = parseInt(m, 10);
+  const day = parseInt(d, 10);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+  return `${y}-${m}-${d}`;
 }
 
 function loadState(): StoredState | null {
@@ -34,7 +38,7 @@ function loadState(): StoredState | null {
       .filter((m): m is Meal => typeof m === "object" && m !== null && typeof m.name === "string" && m.name.trim() !== "")
       .map((m) => ({
         name: m.name.trim(),
-        lastPicked: m.lastPicked ? normalizeDate(m.lastPicked) : undefined,
+        lastPicked: normalizeDate(m.lastPicked),
       }));
 
     return { meals: validMeals, avoidRecent: parsed.avoidRecent };
