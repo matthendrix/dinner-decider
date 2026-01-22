@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 
-type Meal = { name: string; lastPicked?: string };
+type Meal = { name: string; lastPicked?: string; pickCount?: number };
 
 const STORAGE_KEY = "dinner-decider:v1";
 
@@ -55,6 +55,7 @@ function loadState(): StoredState | null {
       .map((m) => ({
         name: m.name.trim(),
         lastPicked: normalizeDate(m.lastPicked),
+        pickCount: typeof m.pickCount === "number" && m.pickCount >= 0 ? m.pickCount : undefined,
       }));
 
     return { meals: validMeals, avoidRecent: parsed.avoidRecent };
@@ -109,6 +110,28 @@ export default function Home() {
     [meals]
   );
 
+  const stats = useMemo(() => {
+    const totalPicks = meals.reduce((sum, m) => sum + (m.pickCount ?? 0), 0);
+
+    // Only consider meals that have been picked at least once
+    const pickedMeals = meals.filter((m) => (m.pickCount ?? 0) > 0);
+
+    const mostPicked = pickedMeals.reduce<Meal | null>(
+      (best, m) => (!best || (m.pickCount ?? 0) > (best.pickCount ?? 0) ? m : best),
+      null
+    );
+
+    // Longest avoided = meal with oldest lastPicked date (among meals that have been picked)
+    const longestAvoided = pickedMeals.reduce<Meal | null>((oldest, m) => {
+      if (!oldest) return m;
+      if (!m.lastPicked) return oldest;
+      if (!oldest.lastPicked) return m;
+      return m.lastPicked < oldest.lastPicked ? m : oldest;
+    }, null);
+
+    return { totalPicks, mostPicked, longestAvoided };
+  }, [meals]);
+
   function addMeal() {
     const name = mealName.trim();
     if (!name) return;
@@ -138,7 +161,11 @@ export default function Home() {
 
     setSuggestion(chosen);
     setMeals((prev) =>
-      prev.map((m) => (m.name === chosen ? { ...m, lastPicked: today } : m))
+      prev.map((m) =>
+        m.name === chosen
+          ? { ...m, lastPicked: today, pickCount: (m.pickCount ?? 0) + 1 }
+          : m
+      )
     );
   }
 
@@ -293,6 +320,37 @@ export default function Home() {
             <p className="text-sm text-neutral-500">All suggestions added!</p>
           )}
         </section>
+
+        {stats.totalPicks > 0 && (
+          <section className="rounded-xl border border-neutral-700 p-4">
+            <h2 className="font-semibold mb-3">Stats</h2>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-semibold">{stats.totalPicks}</div>
+                <div className="text-xs text-neutral-500">Total picks</div>
+              </div>
+              <div>
+                <div className="text-2xl font-semibold truncate">
+                  {stats.mostPicked?.name ?? "—"}
+                </div>
+                <div className="text-xs text-neutral-500">
+                  Most picked{stats.mostPicked?.pickCount ? ` (${stats.mostPicked.pickCount})` : ""}
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-semibold truncate">
+                  {stats.longestAvoided?.name ?? "—"}
+                </div>
+                <div className="text-xs text-neutral-500">
+                  Longest avoided
+                  {stats.longestAvoided?.lastPicked && (
+                    <span className="block">since {stats.longestAvoided.lastPicked}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         <footer className="text-xs text-neutral-500">
           v0.1
