@@ -53,14 +53,14 @@ export default function Home() {
 
   useEffect(() => {
     const saved = loadState();
-    if (!saved) return;
-
-    setMeals(
-      saved.meals.length
-        ? saved.meals
-        : [{ name: "Tacos" }, { name: "Stir-fry" }, { name: "Bolognese" }]
-    );
-    setAvoidRecent(saved.avoidRecent);
+    if (saved) {
+      setMeals(
+        saved.meals.length
+          ? saved.meals
+          : [{ name: "Tacos" }, { name: "Stir-fry" }, { name: "Bolognese" }]
+      );
+      setAvoidRecent(saved.avoidRecent);
+    }
   }, []);
 
   useEffect(() => {
@@ -113,23 +113,23 @@ export default function Home() {
       <div className="mx-auto max-w-2xl space-y-6">
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold">Dinner Decider</h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-neutral-400">
             Add meals, then let fate decide. Avoid repeats from the last week if
             you want.
           </p>
         </header>
 
-        <section className="rounded-xl border p-4 space-y-3">
+        <section className="rounded-xl border border-neutral-700 p-4 space-y-3">
           <div className="flex gap-2">
             <input
-              className="flex-1 rounded-lg border px-3 py-2"
+              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 placeholder-neutral-500"
               placeholder="Add a meal (e.g. butter chicken)"
               value={mealName}
               onChange={(e) => setMealName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addMeal()}
             />
             <button
-              className="rounded-lg border px-4 py-2"
+              className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
               onClick={addMeal}
               type="button"
             >
@@ -157,7 +157,7 @@ export default function Home() {
 
             {suggestion && (
               <button
-                className="rounded-lg border px-4 py-2"
+                className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
                 onClick={() => setSuggestion("")}
                 type="button"
               >
@@ -166,7 +166,7 @@ export default function Home() {
             )}
 
             <button
-              className="rounded-lg border px-4 py-2"
+              className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
               onClick={() => {
                 const ok = window.confirm(
                   "Reset all meals and settings? This cannot be undone."
@@ -186,19 +186,24 @@ export default function Home() {
 
 
           {suggestion && (
-            <div className="rounded-lg bg-neutral-50 border p-4 text-neutral-900">
-              <div className="text-sm text-neutral-500">Tonight is…</div>
+            <div className="rounded-lg bg-neutral-800 border border-neutral-700 p-4">
+              <div className="text-sm text-neutral-400">Tonight is…</div>
               <div className="text-2xl font-semibold">{suggestion}</div>
             </div>
           )}
         </section>
 
-        <section className="rounded-xl border p-4">
-          <h2 className="font-semibold mb-3">Meals</h2>
+        <section className="rounded-xl border border-neutral-700 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Meals</h2>
+            <span className="text-sm text-neutral-500">
+              {meals.length} {meals.length === 1 ? "meal" : "meals"}
+            </span>
+          </div>
           {sortedMeals.length === 0 ? (
             <p className="text-sm text-neutral-500">No meals yet.</p>
           ) : (
-            <ul className="divide-y">
+            <ul className="divide-y divide-neutral-700">
               {sortedMeals.map((m) => (
                 <li key={m.name} className="flex items-center justify-between py-2">
                   <div>
@@ -210,7 +215,7 @@ export default function Home() {
                     )}
                   </div>
                   <button
-                    className="text-sm rounded-lg border px-3 py-1"
+                    className="text-sm rounded-lg border border-neutral-700 px-3 py-1 hover:bg-neutral-800 transition-colors"
                     onClick={() => removeMeal(m.name)}
                     type="button"
                   >
@@ -222,8 +227,8 @@ export default function Home() {
           )}
         </section>
 
-        <footer className="text-xs text-neutral-400">
-          v0.1 local-only (no database). Next step could be saving to Supabase.
+        <footer className="text-xs text-neutral-500">
+          v0.1
         </footer>
       </div>
     </main>
