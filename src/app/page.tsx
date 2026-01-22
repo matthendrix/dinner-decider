@@ -148,7 +148,7 @@ export default function Home() {
 
           <div className="flex gap-2 flex-wrap">
             <button
-              className="rounded-lg border border-white/20 bg-neutral-900 text-white px-4 py-2 hover:bg-neutral-800"
+              className="rounded-lg bg-emerald-600 text-white px-6 py-3 text-lg font-medium hover:bg-emerald-700 transition-colors"
               onClick={pickMeal}
               type="button"
             >
@@ -203,9 +203,11 @@ export default function Home() {
                 <li key={m.name} className="flex items-center justify-between py-2">
                   <div>
                     <div className="font-medium">{m.name}</div>
-                    <div className="text-xs text-neutral-500">
-                      Last picked: {m.lastPicked ?? "never"}
-                    </div>
+                    {m.lastPicked && (
+                      <div className="text-xs text-neutral-500">
+                        Last picked: {m.lastPicked}
+                      </div>
+                    )}
                   </div>
                   <button
                     className="text-sm rounded-lg border px-3 py-1"
