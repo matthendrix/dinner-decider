@@ -12,17 +12,32 @@ type StoredState = {
   avoidRecent: boolean;
 };
 
+function normalizeDate(dateStr: string): string | undefined {
+  // Accept YYYY-MM-DD or YYYY/MM/DD, return YYYY-MM-DD or undefined if invalid
+  const match = dateStr.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+  if (!match) return undefined;
+  return `${match[1]}-${match[2]}-${match[3]}`;
+}
+
 function loadState(): StoredState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredState;
 
-    // Minimal validation
     if (!Array.isArray(parsed.meals) || typeof parsed.avoidRecent !== "boolean") {
       return null;
     }
-    return parsed;
+
+    // Validate and sanitize meal entries
+    const validMeals = parsed.meals
+      .filter((m): m is Meal => typeof m === "object" && m !== null && typeof m.name === "string" && m.name.trim() !== "")
+      .map((m) => ({
+        name: m.name.trim(),
+        lastPicked: m.lastPicked ? normalizeDate(m.lastPicked) : undefined,
+      }));
+
+    return { meals: validMeals, avoidRecent: parsed.avoidRecent };
   } catch {
     return null;
   }
@@ -38,7 +53,10 @@ function saveState(state: StoredState) {
 
 
 function localDateString(date: Date = new Date()) {
-  return date.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function daysAgo(days: number) {
