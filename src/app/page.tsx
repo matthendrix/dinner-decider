@@ -27,9 +27,15 @@ function normalizeDate(value: unknown): string | undefined {
   const match = value.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
   if (!match) return undefined;
   const [, y, m, d] = match;
-  const month = parseInt(m, 10);
-  const day = parseInt(d, 10);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+  // Validate by creating a Date and checking it matches the input
+  const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+  if (
+    date.getFullYear() !== parseInt(y, 10) ||
+    date.getMonth() !== parseInt(m, 10) - 1 ||
+    date.getDate() !== parseInt(d, 10)
+  ) {
+    return undefined;
+  }
   return `${y}-${m}-${d}`;
 }
 
@@ -202,6 +208,7 @@ export default function Home() {
                 if (!ok) return;
                 setMeals([]);
                 setSuggestion("");
+                setMealName("");
               }}
               type="button"
             >
@@ -213,6 +220,7 @@ export default function Home() {
               onClick={() => {
                 setMeals(DEFAULT_MEALS);
                 setSuggestion("");
+                setMealName("");
               }}
               type="button"
             >
