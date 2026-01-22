@@ -146,27 +146,41 @@ export default function Home() {
     if (suggestion === name) setSuggestion("");
   }
 
-  function pickMeal() {
+  function pickMeal(exclude?: string) {
     if (!meals.length) return;
 
     const today = localDateString();
     const oneWeekAgo = daysAgo(7);
 
-    const candidates = avoidRecent
+    let candidates = avoidRecent
       ? meals.filter((m) => !m.lastPicked || m.lastPicked < oneWeekAgo)
       : meals;
 
+    // If excluding a meal (for "not this one"), filter it out
+    if (exclude) {
+      candidates = candidates.filter((m) => m.name !== exclude);
+      // If no candidates left after exclusion, use all meals except the excluded one
+      if (!candidates.length) {
+        candidates = meals.filter((m) => m.name !== exclude);
+      }
+    }
+
     const pool = candidates.length ? candidates : meals;
+    if (!pool.length) return;
+
     const chosen = pool[Math.floor(Math.random() * pool.length)].name;
 
     setSuggestion(chosen);
-    setMeals((prev) =>
-      prev.map((m) =>
-        m.name === chosen
-          ? { ...m, lastPicked: today, pickCount: (m.pickCount ?? 0) + 1 }
-          : m
-      )
-    );
+    // Only update lastPicked/pickCount if not rejecting (i.e., fresh pick)
+    if (!exclude) {
+      setMeals((prev) =>
+        prev.map((m) =>
+          m.name === chosen
+            ? { ...m, lastPicked: today, pickCount: (m.pickCount ?? 0) + 1 }
+            : m
+        )
+      );
+    }
   }
 
   return (
@@ -212,7 +226,7 @@ export default function Home() {
           <div className="flex gap-2 flex-wrap">
             <button
               className="rounded-lg bg-emerald-600 text-white px-6 py-3 text-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
-              onClick={pickMeal}
+              onClick={() => pickMeal()}
               disabled={meals.length === 0}
               type="button"
             >
@@ -255,13 +269,24 @@ export default function Home() {
                 </div>
               </div>
               {suggestion && (
-                <button
-                  className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-                  onClick={() => setSuggestion("")}
-                  type="button"
-                >
-                  Clear
-                </button>
+                <div className="flex gap-3">
+                  {meals.length > 1 && (
+                    <button
+                      className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                      onClick={() => pickMeal(suggestion)}
+                      type="button"
+                    >
+                      Not this one
+                    </button>
+                  )}
+                  <button
+                    className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
+                    onClick={() => setSuggestion("")}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
               )}
             </div>
           </div>
