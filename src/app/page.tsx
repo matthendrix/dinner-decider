@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 
 type Meal = { name: string; lastPicked?: string; pickCount?: number };
@@ -91,6 +91,9 @@ export default function Home() {
   const [meals, setMeals] = useState<Meal[]>(DEFAULT_MEALS);
   const [suggestion, setSuggestion] = useState<string>("");
   const [avoidRecent, setAvoidRecent] = useState<boolean>(true);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [spinDisplay, setSpinDisplay] = useState("");
+  const spinIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const saved = loadState();
@@ -146,42 +149,76 @@ export default function Home() {
     if (suggestion === name) setSuggestion("");
   }
 
-  function pickMeal(exclude?: string) {
-    if (!meals.length) return;
-
-    const today = localDateString();
+  const getPool = useCallback((exclude?: string) => {
     const oneWeekAgo = daysAgo(7);
-
     let candidates = avoidRecent
       ? meals.filter((m) => !m.lastPicked || m.lastPicked < oneWeekAgo)
       : meals;
 
-    // If excluding a meal (for "not this one"), filter it out
     if (exclude) {
       candidates = candidates.filter((m) => m.name !== exclude);
-      // If no candidates left after exclusion, use all meals except the excluded one
       if (!candidates.length) {
         candidates = meals.filter((m) => m.name !== exclude);
       }
     }
 
-    const pool = candidates.length ? candidates : meals;
+    return candidates.length ? candidates : meals;
+  }, [meals, avoidRecent]);
+
+  function pickMeal(exclude?: string) {
+    if (!meals.length || isSpinning) return;
+
+    const pool = getPool(exclude);
     if (!pool.length) return;
 
-    const chosen = pool[Math.floor(Math.random() * pool.length)].name;
-
-    setSuggestion(chosen);
-    // Only update lastPicked/pickCount if not rejecting (i.e., fresh pick)
-    if (!exclude) {
-      setMeals((prev) =>
-        prev.map((m) =>
-          m.name === chosen
-            ? { ...m, lastPicked: today, pickCount: (m.pickCount ?? 0) + 1 }
-            : m
-        )
-      );
+    // For "not this one", skip animation
+    if (exclude) {
+      const chosen = pool[Math.floor(Math.random() * pool.length)].name;
+      setSuggestion(chosen);
+      return;
     }
+
+    // Start spinning animation
+    setIsSpinning(true);
+    setSuggestion("");
+
+    const spinDuration = 1500;
+    const intervalSpeed = 80;
+    let elapsed = 0;
+
+    spinIntervalRef.current = setInterval(() => {
+      elapsed += intervalSpeed;
+      const randomMeal = meals[Math.floor(Math.random() * meals.length)].name;
+      setSpinDisplay(randomMeal);
+
+      if (elapsed >= spinDuration) {
+        if (spinIntervalRef.current) clearInterval(spinIntervalRef.current);
+
+        // Pick the final meal
+        const chosen = pool[Math.floor(Math.random() * pool.length)].name;
+        setSpinDisplay("");
+        setSuggestion(chosen);
+        setIsSpinning(false);
+
+        // Update lastPicked/pickCount
+        const today = localDateString();
+        setMeals((prev) =>
+          prev.map((m) =>
+            m.name === chosen
+              ? { ...m, lastPicked: today, pickCount: (m.pickCount ?? 0) + 1 }
+              : m
+          )
+        );
+      }
+    }, intervalSpeed);
   }
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (spinIntervalRef.current) clearInterval(spinIntervalRef.current);
+    };
+  }, []);
 
   return (
     <main className="min-h-screen p-6 sm:p-10">
@@ -227,7 +264,7 @@ export default function Home() {
             <button
               className="rounded-lg bg-emerald-600 text-white px-6 py-3 text-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
               onClick={() => pickMeal()}
-              disabled={meals.length === 0}
+              disabled={meals.length === 0 || isSpinning}
               type="button"
             >
               Suggest dinner
@@ -260,15 +297,21 @@ export default function Home() {
             </button>
           </div>
 
-          <div className={`rounded-lg p-4 ${suggestion ? "bg-emerald-950 border-2 border-emerald-700" : "bg-neutral-800 border border-neutral-700"}`}>
+          <div className={`rounded-lg p-4 ${suggestion || isSpinning ? "bg-emerald-950 border-2 border-emerald-700" : "bg-neutral-800 border border-neutral-700"}`}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm text-neutral-400">Tonight is…</div>
-                <div className={`font-semibold ${suggestion ? "text-3xl text-emerald-100" : "text-2xl"}`}>
-                  {suggestion || <span className="text-neutral-600">Click &quot;Suggest dinner&quot; to find out</span>}
+                <div className={`font-semibold ${suggestion || isSpinning ? "text-3xl text-emerald-100" : "text-2xl"}`}>
+                  {isSpinning ? (
+                    <span className="inline-block animate-pulse">{spinDisplay}</span>
+                  ) : suggestion ? (
+                    suggestion
+                  ) : (
+                    <span className="text-neutral-600">Click &quot;Suggest dinner&quot; to find out</span>
+                  )}
                 </div>
               </div>
-              {suggestion && (
+              {suggestion && !isSpinning && (
                 <div className="flex gap-3">
                   {meals.length > 1 && (
                     <button
