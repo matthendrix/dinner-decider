@@ -229,6 +229,29 @@ export default function Home() {
           )}
         </section>
 
+        <section className="rounded-xl border border-neutral-700 p-4">
+          <h2 className="font-semibold mb-3">Quick add</h2>
+          <div className="flex flex-wrap gap-2">
+            {["Tacos", "Stir-fry", "Pasta", "Curry", "Pizza", "Burgers", "Salad", "Soup", "Sushi", "Roast chicken"]
+              .filter((name) => !meals.some((m) => m.name.toLowerCase() === name.toLowerCase()))
+              .map((name) => (
+                <button
+                  key={name}
+                  className="rounded-full border border-neutral-600 bg-neutral-800 px-3 py-1 text-sm hover:bg-neutral-700 transition-colors"
+                  onClick={() => setMeals((prev) => [...prev, { name }])}
+                  type="button"
+                >
+                  + {name}
+                </button>
+              ))}
+          </div>
+          {meals.length > 0 &&
+            ["Tacos", "Stir-fry", "Pasta", "Curry", "Pizza", "Burgers", "Salad", "Soup", "Sushi", "Roast chicken"]
+              .filter((name) => !meals.some((m) => m.name.toLowerCase() === name.toLowerCase())).length === 0 && (
+            <p className="text-sm text-neutral-500">All suggestions added!</p>
+          )}
+        </section>
+
         <footer className="text-xs text-neutral-500">
           v0.1
         </footer>
