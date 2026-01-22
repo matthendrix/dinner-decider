@@ -1,8 +1,41 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 
 type Meal = { name: string; lastPicked?: string };
+
+const STORAGE_KEY = "dinner-decider:v1";
+
+type StoredState = {
+  meals: Meal[];
+  avoidRecent: boolean;
+};
+
+function loadState(): StoredState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredState;
+
+    // Minimal validation
+    if (!Array.isArray(parsed.meals) || typeof parsed.avoidRecent !== "boolean") {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(state: StoredState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore (storage full / blocked)
+  }
+}
+
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -17,6 +50,24 @@ export default function Home() {
   ]);
   const [suggestion, setSuggestion] = useState<string>("");
   const [avoidRecent, setAvoidRecent] = useState<boolean>(true);
+
+  useEffect(() => {
+  const saved = loadState();
+  if (!saved) return;
+
+  setMeals(saved.meals.length ? saved.meals : [
+    { name: "Tacos" },
+    { name: "Stir-fry" },
+    { name: "Bolognese" },
+  ]);
+
+  useEffect(() => {
+    saveState({ meals, avoidRecent });
+  }, [meals, avoidRecent]);
+
+  setAvoidRecent(saved.avoidRecent);
+}, []);
+
 
   const sortedMeals = useMemo(
     () => [...meals].sort((a, b) => a.name.localeCompare(b.name)),
@@ -96,7 +147,7 @@ export default function Home() {
             Avoid meals picked in the last 7 days
           </label>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               className="rounded-lg bg-black text-white px-4 py-2"
               onClick={pickMeal}
@@ -104,6 +155,7 @@ export default function Home() {
             >
               Suggest dinner
             </button>
+
             {suggestion && (
               <button
                 className="rounded-lg border px-4 py-2"
@@ -113,7 +165,22 @@ export default function Home() {
                 Clear
               </button>
             )}
+
+            <button
+              className="rounded-lg border px-4 py-2"
+              onClick={() => {
+                localStorage.removeItem(STORAGE_KEY);
+                setMeals([{ name: "Tacos" }, { name: "Stir-fry" }, { name: "Bolognese" }]);
+                setAvoidRecent(true);
+                setSuggestion("");
+                setMealName("");
+              }}
+              type="button"
+            >
+              Reset
+            </button>
           </div>
+
 
           {suggestion && (
             <div className="rounded-lg bg-neutral-50 border p-4">
