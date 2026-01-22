@@ -183,7 +183,7 @@ export default function Home() {
         <section className="rounded-xl border border-neutral-700 p-4 space-y-3">
           <div className="flex gap-2">
             <input
-              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 placeholder-neutral-500"
+              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
               placeholder="Add a meal (e.g. butter chicken)"
               aria-label="Meal name"
               value={mealName}
@@ -199,11 +199,12 @@ export default function Home() {
             </button>
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input
               type="checkbox"
               checked={avoidRecent}
               onChange={(e) => setAvoidRecent(e.target.checked)}
+              className="w-4 h-4 accent-emerald-600 rounded"
             />
             Avoid meals picked in the last 7 days
           </label>
@@ -218,30 +219,6 @@ export default function Home() {
               Suggest dinner
             </button>
 
-            {suggestion && (
-              <button
-                className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
-                onClick={() => setSuggestion("")}
-                type="button"
-              >
-                Clear
-              </button>
-            )}
-
-            <button
-              className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
-              onClick={() => {
-                const ok = window.confirm("Clear all meals? This cannot be undone.");
-                if (!ok) return;
-                setMeals([]);
-                setSuggestion("");
-                setMealName("");
-              }}
-              type="button"
-            >
-              Clear all
-            </button>
-
             <button
               className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
               onClick={() => {
@@ -253,15 +230,41 @@ export default function Home() {
             >
               Restore defaults
             </button>
+
+            <button
+              className="rounded-lg border border-red-800 text-red-400 px-4 py-2 hover:bg-red-950 transition-colors"
+              onClick={() => {
+                const ok = window.confirm("Clear all meals? This cannot be undone.");
+                if (!ok) return;
+                setMeals([]);
+                setSuggestion("");
+                setMealName("");
+              }}
+              type="button"
+            >
+              Clear all
+            </button>
           </div>
 
-
-          {suggestion && (
-            <div className="rounded-lg bg-neutral-800 border border-neutral-700 p-4">
-              <div className="text-sm text-neutral-400">Tonight is…</div>
-              <div className="text-2xl font-semibold">{suggestion}</div>
+          <div className={`rounded-lg p-4 ${suggestion ? "bg-emerald-950 border-2 border-emerald-700" : "bg-neutral-800 border border-neutral-700"}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-neutral-400">Tonight is…</div>
+                <div className={`font-semibold ${suggestion ? "text-3xl text-emerald-100" : "text-2xl"}`}>
+                  {suggestion || <span className="text-neutral-600">Click &quot;Suggest dinner&quot; to find out</span>}
+                </div>
+              </div>
+              {suggestion && (
+                <button
+                  className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
+                  onClick={() => setSuggestion("")}
+                  type="button"
+                >
+                  Clear
+                </button>
+              )}
             </div>
-          )}
+          </div>
         </section>
 
         <section className="rounded-xl border border-neutral-700 p-4">
@@ -275,51 +278,60 @@ export default function Home() {
             <p className="text-sm text-neutral-500">No meals yet.</p>
           ) : (
             <ul className="divide-y divide-neutral-700">
-              {sortedMeals.map((m) => (
-                <li key={m.name} className="flex items-center justify-between py-2">
-                  <div>
-                    <div className="font-medium">{m.name}</div>
-                    {m.lastPicked && (
-                      <div className="text-xs text-neutral-500">
-                        Last picked: {m.lastPicked}
+              {sortedMeals.map((m) => {
+                const isRecent = m.lastPicked && m.lastPicked >= daysAgo(7);
+                return (
+                  <li key={m.name} className={`flex items-center justify-between py-2 ${isRecent ? "opacity-50" : ""}`}>
+                    <div>
+                      <div className="font-medium flex items-center gap-2">
+                        {m.name}
+                        {isRecent && (
+                          <span className="text-xs bg-neutral-700 text-neutral-400 px-1.5 py-0.5 rounded font-normal">recent</span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <button
-                    className="text-sm rounded-lg border border-neutral-700 px-3 py-1 hover:bg-neutral-800 transition-colors"
-                    onClick={() => removeMeal(m.name)}
-                    type="button"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
+                      {m.lastPicked && (
+                        <div className="text-xs text-neutral-500">
+                          Last picked: {m.lastPicked}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      className="text-neutral-500 hover:text-red-400 transition-colors p-1"
+                      onClick={() => removeMeal(m.name)}
+                      type="button"
+                      aria-label={`Remove ${m.name}`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
 
-        <section className="rounded-xl border border-neutral-700 p-4">
-          <h2 className="font-semibold mb-3">Quick add</h2>
-          <div className="flex flex-wrap gap-2">
-            {["Tacos", "Stir-fry", "Pasta", "Curry", "Pizza", "Burgers", "Salad", "Soup", "Sushi", "Roast chicken"]
-              .filter((name) => !meals.some((m) => m.name.toLowerCase() === name.toLowerCase()))
-              .map((name) => (
-                <button
-                  key={name}
-                  className="rounded-full border border-neutral-600 bg-neutral-800 px-3 py-1 text-sm hover:bg-neutral-700 transition-colors"
-                  onClick={() => setMeals((prev) => [...prev, { name }])}
-                  type="button"
-                >
-                  + {name}
-                </button>
-              ))}
-          </div>
-          {meals.length > 0 &&
-            ["Tacos", "Stir-fry", "Pasta", "Curry", "Pizza", "Burgers", "Salad", "Soup", "Sushi", "Roast chicken"]
-              .filter((name) => !meals.some((m) => m.name.toLowerCase() === name.toLowerCase())).length === 0 && (
-            <p className="text-sm text-neutral-500">All suggestions added!</p>
-          )}
-        </section>
+        {["Tacos", "Stir-fry", "Pasta", "Curry", "Pizza", "Burgers", "Salad", "Soup", "Sushi", "Roast chicken"]
+          .filter((name) => !meals.some((m) => m.name.toLowerCase() === name.toLowerCase())).length > 0 && (
+          <section className="rounded-xl border border-neutral-700 p-4">
+            <h2 className="font-semibold mb-3">Quick add</h2>
+            <div className="flex flex-wrap gap-2">
+              {["Tacos", "Stir-fry", "Pasta", "Curry", "Pizza", "Burgers", "Salad", "Soup", "Sushi", "Roast chicken"]
+                .filter((name) => !meals.some((m) => m.name.toLowerCase() === name.toLowerCase()))
+                .map((name) => (
+                  <button
+                    key={name}
+                    className="rounded-full border border-neutral-600 bg-neutral-800 px-3 py-1 text-sm hover:bg-neutral-700 transition-colors"
+                    onClick={() => setMeals((prev) => [...prev, { name }])}
+                    type="button"
+                  >
+                    + {name}
+                  </button>
+                ))}
+            </div>
+          </section>
+        )}
 
         {stats.totalPicks > 0 && (
           <section className="rounded-xl border border-neutral-700 p-4">
@@ -352,10 +364,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="text-xs text-neutral-500">
-          v0.1
-        </footer>
-      </div>
+              </div>
     </main>
   );
 }
