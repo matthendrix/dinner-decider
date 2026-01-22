@@ -52,21 +52,20 @@ export default function Home() {
   const [avoidRecent, setAvoidRecent] = useState<boolean>(true);
 
   useEffect(() => {
-  const saved = loadState();
-  if (!saved) return;
+    const saved = loadState();
+    if (!saved) return;
 
-  setMeals(saved.meals.length ? saved.meals : [
-    { name: "Tacos" },
-    { name: "Stir-fry" },
-    { name: "Bolognese" },
-  ]);
+    setMeals(
+      saved.meals.length
+        ? saved.meals
+        : [{ name: "Tacos" }, { name: "Stir-fry" }, { name: "Bolognese" }]
+    );
+    setAvoidRecent(saved.avoidRecent);
+  }, []);
 
   useEffect(() => {
     saveState({ meals, avoidRecent });
   }, [meals, avoidRecent]);
-
-  setAvoidRecent(saved.avoidRecent);
-}, []);
 
 
   const sortedMeals = useMemo(
