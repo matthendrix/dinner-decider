@@ -148,7 +148,7 @@ export default function Home() {
 
           <div className="flex gap-2 flex-wrap">
             <button
-              className="rounded-lg bg-black text-white px-4 py-2"
+              className="rounded-lg border border-white/20 bg-neutral-900 text-white px-4 py-2 hover:bg-neutral-800"
               onClick={pickMeal}
               type="button"
             >
@@ -168,6 +168,10 @@ export default function Home() {
             <button
               className="rounded-lg border px-4 py-2"
               onClick={() => {
+                const ok = window.confirm(
+                  "Reset all meals and settings? This cannot be undone."
+                );
+                if (!ok) return;
                 localStorage.removeItem(STORAGE_KEY);
                 setMeals([{ name: "Tacos" }, { name: "Stir-fry" }, { name: "Bolognese" }]);
                 setAvoidRecent(true);
@@ -176,7 +180,7 @@ export default function Home() {
               }}
               type="button"
             >
-              Reset
+              Reset all meals
             </button>
           </div>
 
