@@ -7,6 +7,16 @@ type Meal = { name: string; lastPicked?: string };
 
 const STORAGE_KEY = "dinner-decider:v1";
 
+const DEFAULT_MEALS: Meal[] = [
+  { name: "Tacos" },
+  { name: "Stir-fry" },
+  { name: "Pasta" },
+  { name: "Curry" },
+  { name: "Pizza" },
+  { name: "Burgers" },
+  { name: "Roast chicken" },
+];
+
 type StoredState = {
   meals: Meal[];
   avoidRecent: boolean;
@@ -71,11 +81,7 @@ function daysAgo(days: number) {
 
 export default function Home() {
   const [mealName, setMealName] = useState("");
-  const [meals, setMeals] = useState<Meal[]>([
-    { name: "Tacos" },
-    { name: "Stir-fry" },
-    { name: "Bolognese" },
-  ]);
+  const [meals, setMeals] = useState<Meal[]>(DEFAULT_MEALS);
   const [suggestion, setSuggestion] = useState<string>("");
   const [avoidRecent, setAvoidRecent] = useState<boolean>(true);
 
@@ -192,19 +198,25 @@ export default function Home() {
             <button
               className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
               onClick={() => {
-                const ok = window.confirm(
-                  "Reset all meals and settings? This cannot be undone."
-                );
+                const ok = window.confirm("Clear all meals? This cannot be undone.");
                 if (!ok) return;
-                localStorage.removeItem(STORAGE_KEY);
-                setMeals([{ name: "Tacos" }, { name: "Stir-fry" }, { name: "Bolognese" }]);
-                setAvoidRecent(true);
+                setMeals([]);
                 setSuggestion("");
-                setMealName("");
               }}
               type="button"
             >
-              Reset all meals
+              Clear all
+            </button>
+
+            <button
+              className="rounded-lg border border-neutral-700 px-4 py-2 hover:bg-neutral-800 transition-colors"
+              onClick={() => {
+                setMeals(DEFAULT_MEALS);
+                setSuggestion("");
+              }}
+              type="button"
+            >
+              Restore defaults
             </button>
           </div>
 
