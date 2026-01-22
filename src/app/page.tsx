@@ -182,7 +182,7 @@ export default function Home() {
 
 
           {suggestion && (
-            <div className="rounded-lg bg-neutral-50 border p-4">
+            <div className="rounded-lg bg-neutral-50 border p-4 text-neutral-900">
               <div className="text-sm text-neutral-500">Tonight is…</div>
               <div className="text-2xl font-semibold">{suggestion}</div>
             </div>
