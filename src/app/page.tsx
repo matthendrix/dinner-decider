@@ -37,8 +37,14 @@ function saveState(state: StoredState) {
 }
 
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+function localDateString(date: Date = new Date()) {
+  return date.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+}
+
+function daysAgo(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return localDateString(d);
 }
 
 export default function Home() {
@@ -54,11 +60,7 @@ export default function Home() {
   useEffect(() => {
     const saved = loadState();
     if (saved) {
-      setMeals(
-        saved.meals.length
-          ? saved.meals
-          : [{ name: "Tacos" }, { name: "Stir-fry" }, { name: "Bolognese" }]
-      );
+      setMeals(saved.meals);
       setAvoidRecent(saved.avoidRecent);
     }
   }, []);
@@ -90,10 +92,8 @@ export default function Home() {
   function pickMeal() {
     if (!meals.length) return;
 
-    const today = todayISO();
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
+    const today = localDateString();
+    const oneWeekAgo = daysAgo(7);
 
     const candidates = avoidRecent
       ? meals.filter((m) => !m.lastPicked || m.lastPicked < oneWeekAgo)
@@ -124,6 +124,7 @@ export default function Home() {
             <input
               className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 placeholder-neutral-500"
               placeholder="Add a meal (e.g. butter chicken)"
+              aria-label="Meal name"
               value={mealName}
               onChange={(e) => setMealName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addMeal()}
@@ -148,8 +149,9 @@ export default function Home() {
 
           <div className="flex gap-2 flex-wrap">
             <button
-              className="rounded-lg bg-emerald-600 text-white px-6 py-3 text-lg font-medium hover:bg-emerald-700 transition-colors"
+              className="rounded-lg bg-emerald-600 text-white px-6 py-3 text-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
               onClick={pickMeal}
+              disabled={meals.length === 0}
               type="button"
             >
               Suggest dinner
