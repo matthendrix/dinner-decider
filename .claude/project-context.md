@@ -10,6 +10,15 @@ A simple meal planning helper that randomly suggests what to cook for dinner fro
 - No backend/database - all data stored in localStorage
 - Default meals: Tacos, Stir-fry, Bolognese
 
+## Deployment
+
+- **Hosting:** Vercel (auto-deploy on push to master)
+- **GitHub repo:** matthendrix/dinner-decider
+- **Production branch:** master
+- **Node.js version:** 24.x
+- **Env vars:** none configured
+- **Pre-deploy check:** ensure `npm run build` succeeds locally
+
 ## Key Features
 
 1. **Meal Management** - Add/remove meals from personal list
